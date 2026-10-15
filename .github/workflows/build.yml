@@ -1,4 +1,4 @@
-name: Construire l'APK
+name: Build APK
 
 on:
   push:
@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Decompresser le projet
+      - name: Decompress project
         run: unzip -q projet.zip -d projet
 
       - uses: actions/setup-java@v4
@@ -22,9 +22,15 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Compiler
+      - name: Make gradlew executable and build
         working-directory: projet
-        run: gradle assembleDebug --no-daemon --stacktrace
+        run: |
+          chmod +x gradlew || true
+          if [ -f "./gradlew" ]; then
+            ./gradlew assembleDebug --no-daemon --stacktrace
+          else
+            gradle assembleDebug --no-daemon --stacktrace
+          fi
 
       - uses: actions/upload-artifact@v4
         with:
