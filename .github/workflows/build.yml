@@ -18,13 +18,20 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.9'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Make gradlew executable and build
-        working-directory: projet
+      - name: Accept Android Licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
+      - name: Build APK with Gradle
         run: |
+          # Trouver où se situe le fichier settings.gradle ou build.gradle
+          TARGET_DIR=$(find projet -maxdepth 2 -name "settings.gradle*" -o -name "build.gradle*" | head -n 1 | xargs dirname)
+          if [ -z "$TARGET_DIR" ]; then TARGET_DIR="projet"; fi
+          echo "Building in directory: $TARGET_DIR"
+          cd "$TARGET_DIR"
+          
           chmod +x gradlew || true
           if [ -f "./gradlew" ]; then
             ./gradlew assembleDebug --no-daemon --stacktrace
@@ -32,8 +39,9 @@ jobs:
             gradle assembleDebug --no-daemon --stacktrace
           fi
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
         with:
           name: NKI2SF2-apk
-          path: projet/app/build/outputs/apk/debug/*.apk
+          path: '**/build/outputs/apk/debug/*.apk'
           
